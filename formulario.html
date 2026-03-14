@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulario PEM Necoclí 2025-2035</title>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+
+/* ── LOGIN WALL ── */
+#loginWall{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a5276 0%,#154360 60%,#0d1b2a 100%);
+}
+.login-box{
+  background:#fff;border-radius:20px;padding:48px 40px;
+  text-align:center;max-width:420px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.login-box .logo{font-size:3.5rem;margin-bottom:12px}
+.login-box h1{color:#1a5276;font-size:1.3rem;font-weight:700;margin-bottom:6px}
+.login-box p{color:#666;font-size:0.88rem;margin-bottom:28px;line-height:1.5}
+.login-box .institution{
+  background:#eaf4fb;border:1px solid #aed6f1;border-radius:10px;
+  padding:10px 14px;font-size:0.8rem;color:#1a5276;
+  margin-bottom:28px;font-weight:600
+}
+#googleSignInBtn{
+  width:100%;padding:13px;
+  border:2px solid #ddd;border-radius:10px;
+  background:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  font-size:0.95rem;font-weight:600;color:#333;
+  transition:all 0.2s;margin-bottom:16px
+}
+#googleSignInBtn:hover{border-color:#2e86c1;box-shadow:0 2px 12px rgba(46,134,193,0.2)}
+#googleSignInBtn img{width:22px;height:22px}
+.login-note{font-size:0.75rem;color:#999;margin-top:8px}
+
+/* ── APP ── */
+#app{display:none}
+.header{background:linear-gradient(135deg,#1a5276,#2e86c1);color:#fff;padding:16px 20px}
+.header-inner{max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header h1{font-size:1.25rem;margin-bottom:2px}
+.header p{font-size:0.82rem;opacity:0.9}
+.header-nav{display:flex;gap:10px;align-items:center}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border-radius:30px;padding:6px 14px 6px 6px}
+.user-chip img{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.6)}
+.user-chip span{font-size:0.82rem;font-weight:600}
+.btn-logout{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:0.8rem;transition:0.2s}
+.btn-logout:hover{background:rgba(255,255,255,0.35)}
+.btn-home{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:0.8rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-home:hover{background:rgba(255,255,255,0.3)}
+
+.tabs{display:flex;background:#154360}
+.tab{flex:1;padding:12px;text-align:center;color:#fff;cursor:pointer;font-size:0.9rem;transition:0.3s}
+.tab:hover{background:#1a5276}
+.tab.active{background:#2e86c1;font-weight:bold;border-bottom:3px solid #f39c12}
+
+.container{max-width:800px;margin:20px auto;padding:0 15px}
+.card{background:#fff;border-radius:12px;padding:25px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+.card h2{color:#1a5276;margin-bottom:15px;font-size:1.1rem;border-bottom:2px solid #f39c12;padding-bottom:8px}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;font-weight:600;color:#2c3e50;margin-bottom:5px;font-size:0.85rem}
+.form-group select,.form-group input,.form-group textarea{width:100%;padding:10px 12px;border:2px solid #dde;border-radius:8px;font-size:0.9rem;transition:0.3s}
+.form-group select:focus,.form-group input:focus,.form-group textarea:focus{border-color:#2e86c1;outline:none;box-shadow:0 0 0 3px rgba(46,134,193,0.15)}
+.form-group textarea{min-height:80px;resize:vertical}
+.field-readonly{background:#f8f9fa!important;color:#555;cursor:default}
+.row{display:flex;gap:15px}
+.row .form-group{flex:1}
+.btn-send{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;transition:0.3s}
+.btn-send:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(39,174,96,0.4)}
+.btn-send:disabled{background:#95a5a6;cursor:not-allowed;transform:none;box-shadow:none}
+.msg{padding:12px;border-radius:8px;margin-top:15px;text-align:center;font-weight:600;display:none}
+.msg.ok{display:block;background:#d5f5e3;color:#1e8449;border:1px solid #82e0aa}
+.msg.err{display:block;background:#fadbd8;color:#922b21;border:1px solid #f1948a}
+.hidden{display:none}
+.historial-item{background:#f8f9fa;border-left:4px solid #2e86c1;padding:15px;margin-bottom:10px;border-radius:0 8px 8px 0}
+.historial-item h3{color:#1a5276;font-size:0.95rem;margin-bottom:5px}
+.historial-item p{font-size:0.8rem;color:#555;margin-bottom:3px}
+.historial-item .badge{display:inline-block;background:#2e86c1;color:#fff;padding:2px 10px;border-radius:20px;font-size:0.75rem;margin-right:5px}
+.badge-own{background:#27ae60!important}
+.empty{text-align:center;padding:40px;color:#999}
+.empty span{font-size:3rem;display:block;margin-bottom:10px}
+.loading{text-align:center;padding:30px;color:#2e86c1}
+.avance-bar{height:8px;background:#eee;border-radius:4px;margin-top:5px}
+.avance-fill{height:100%;border-radius:4px;transition:0.3s}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap}
+.filter-row .form-group{flex:1;min-width:150px}
+@media(max-width:600px){.row{flex-direction:column;gap:0}.header h1{font-size:1rem}.user-chip span{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN WALL ══════════════ -->
+<div id="loginWall">
+  <div class="login-box">
+    <div class="logo">📋</div>
+    <h1>Plan Educativo Municipal</h1>
+    <p>Sistema de Registro de Avances Institucionales<br>Necoclí 2025–2035</p>
+    <div class="institution">🏫 Mesa Educativa Municipal de Necoclí</div>
+    <button id="googleSignInBtn" onclick="iniciarSesion()">
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+      Continuar con Google
+    </button>
+    <p class="login-note">Acceso restringido a funcionarios y docentes autorizados del municipio de Necoclí</p>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <h1>📋 PEM Necoclí 2025-2035</h1>
+        <p>Registro de Avances Institucionales</p>
+      </div>
+      <div class="header-nav">
+        <a href="index.html" class="btn-home">🏠 Tablero</a>
+        <div class="user-chip">
+          <img id="userPhoto" src="" alt="foto">
+          <span id="userName">Usuario</span>
+        </div>
+        <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('form')">📝 Nuevo Registro</div>
+    <div class="tab" onclick="showTab('hist')">📊 Historial de Avances</div>
+  </div>
+
+  <div class="container">
+
+    <!-- FORMULARIO -->
+    <div id="tab-form">
+      <div class="card">
+        <h2>🏫 Datos de la Institución</h2>
+        <div class="form-group">
+          <label>Institución Educativa *</label>
+          <select id="institucion" required>
+            <option value="">-- Seleccione --</option>
+            <option>CER Bobal La Playa</option>
+            <option>CER El Paraíso</option>
+            <option>CER Melilto Arriba</option>
+            <option>CER Vale Pavas</option>
+            <option>IER Caribia</option>
+            <option>IE Antonio Roldán Betancur</option>
+            <option>IER El Totumo</option>
+            <option>IER Melilto</option>
+            <option>IER Mulaticos Piedrecitas</option>
+            <option>IER Mulatos</option>
+            <option>IER San Sebastián de Urabá</option>
+            <option>IER Tulapita</option>
+            <option>IER Zapata</option>
+            <option>IER Indígena José Elías Suárez</option>
+            <option>IE Eduardo Espitia Romero</option>
+            <option>IER La Comarca</option>
+            <option>IER Las Changas</option>
+            <option>IER Mello Villavicencio</option>
+            <option>IER Pueblo Nuevo</option>
+            <option>Secretaría de Educación Municipal</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label>Responsable *</label>
+            <input type="text" id="responsable" class="field-readonly" readonly placeholder="Se completa con cuenta Google">
+          </div>
+          <div class="form-group">
+            <label>Cargo</label>
+            <select id="cargo">
+              <option value="">-- Seleccione --</option>
+              <option>Rector(a)</option>
+              <option>Coordinador(a)</option>
+              <option>Docente</option>
+              <option>Directivo</option>
+              <option>Funcionario SEM</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label>Email (Google)</label>
+            <input type="email" id="email" class="field-readonly" readonly placeholder="Se completa automáticamente">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="telefono" placeholder="300 000 0000">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🎯 Línea Estratégica y Programa</h2>
+        <div class="form-group">
+          <label>Línea Estratégica *</label>
+          <select id="lineaEstrategica" required>
+            <option value="">-- Seleccione --</option>
+            <option>L1 – Educación para la Equidad y las Trayectorias Completas</option>
+            <option>L2 – Calidad Educativa con Innovación y Sostenibilidad</option>
+            <option>L3 – Educación con Identidad y Pertinencia Territorial</option>
+            <option>L4 – Gestión Educativa Participativa y con Gobernanza</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Programa *</label>
+          <select id="programa" required>
+            <option value="">-- Seleccione --</option>
+            <option>P1 – Acceso y Equidad Educativa</option>
+            <option>P2 – Desarrollo Personal, Familiar y Comunitario</option>
+            <option>P3 – Calidad, Innovación y Mejora Continua</option>
+            <option>P4 – Infraestructura y Recursos Educativos</option>
+            <option>P5 – Pertinencia y Contextualización Educativa</option>
+            <option>P6 – Gobernanza y Monitoreo del PEM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Proyecto Articulador</label>
+          <select id="componente">
+            <option value="">-- Seleccione (opcional) --</option>
+            <option>PA-1 Trayectorias Educativas Completas</option>
+            <option>PA-2 Centros de Recursos para la Inclusión</option>
+            <option>PA-3 Ruta de Cobertura Rural</option>
+            <option>PA-4 Habilidades para la Vida</option>
+            <option>PA-5 Puentes a la Educación Terciaria</option>
+            <option>PA-6 Acompañamiento a Familias</option>
+            <option>PA-7 Educación en Convivencia y Ética</option>
+            <option>PA-8 Voluntariado y Participación Comunitaria</option>
+            <option>PA-9 Plan de Mejora Continua</option>
+            <option>PA-10 Formación y Acompañamiento Docente</option>
+            <option>PA-11 Centro de Innovación / Dotación Científica</option>
+            <option>PA-12 Plan Maestro de Infraestructura</option>
+            <option>PA-13 Dotación TIC Integral</option>
+            <option>PA-14 Laboratorios STEAM / Alianzas Sostenibilidad</option>
+            <option>PA-15 Cátedra Municipal y Multiculturalidad</option>
+            <option>PA-16 PEI Actualizados y Currículos Contextualizados</option>
+            <option>PA-17 Aulas Abiertas / Gobiernos Escolares</option>
+            <option>PA-18 Clubes de Lectura y Pensamiento Crítico</option>
+            <option>PA-19 Proyectos Productivos Escolares y Rurales</option>
+            <option>PA-20 Participación y Gobernanza Educativa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Meta / Acción específica *</label>
+          <textarea id="meta" placeholder="Describa la meta o acción específica que está reportando..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📈 Avance y Seguimiento</h2>
+        <div class="row">
+          <div class="form-group">
+            <label>Porcentaje de Avance *</label>
+            <select id="avance" required>
+              <option value="">-- Seleccione --</option>
+              <option>0%</option><option>10%</option><option>20%</option><option>30%</option>
+              <option>40%</option><option>50%</option><option>60%</option><option>70%</option>
+              <option>80%</option><option>90%</option><option>100%</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Semestre de Reporte *</label>
+            <select id="semestre" required>
+              <option value="">-- Seleccione --</option>
+              <option>2025-S1</option><option>2025-S2</option>
+              <option>2026-S1</option><option>2026-S2</option>
+              <option>2027-S1</option><option>2027-S2</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Población Beneficiada (personas)</label>
+          <input type="number" id="poblacion" placeholder="Ej: 435" min="0">
+        </div>
+        <div class="form-group">
+          <label>Observaciones / Descripción del Avance *</label>
+          <textarea id="observacion" placeholder="Describa las actividades realizadas, logros alcanzados, recursos utilizados..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Enlace de Evidencia (Drive, foto, documento)</label>
+          <input type="url" id="evidencia" placeholder="https://drive.google.com/...">
+        </div>
+        <div class="form-group">
+          <label>Dificultades Encontradas</label>
+          <textarea id="dificultades" placeholder="Describa obstáculos, retos o situaciones que afectaron el avance..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-send" id="btnEnviar" onclick="enviar()">📤 Enviar Registro</button>
+      <div id="msg"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div id="tab-hist" class="hidden">
+      <div class="card">
+        <h2>📊 Registros de Avance del PEM</h2>
+        <div class="filter-row">
+          <div class="form-group">
+            <label>Filtrar por Institución</label>
+            <select id="filtroInst" onchange="filtrar()">
+              <option value="">Todas las instituciones</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Filtrar por Línea</label>
+            <select id="filtroLinea" onchange="filtrar()">
+              <option value="">Todas las líneas</option>
+              <option>L1</option><option>L2</option><option>L3</option><option>L4</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Filtrar por Semestre</label>
+            <select id="filtroSemestre" onchange="filtrar()">
+              <option value="">Todos</option>
+              <option>2025-S1</option><option>2025-S2</option>
+              <option>2026-S1</option><option>2026-S2</option>
+            </select>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#555;cursor:pointer;margin-bottom:12px">
+          <input type="checkbox" id="soloMios" onchange="filtrar()">
+          Ver solo mis registros
+        </label>
+        <div id="historial">
+          <div class="loading">⏳ Cargando registros...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════
+// CONFIG — cambia solo este ID
+// ══════════════════════════════════════
+const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID_AQUI.apps.googleusercontent.com';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQBgq1TI2E2FEsulhXEeFT9PF-OHIim4BzhBDZl1vOlnJddrmrrituF_Tx2cc5Asmq/exec';
+
+// ══════════════════════════════════════
+// ESTADO DE SESIÓN
+// ══════════════════════════════════════
+let currentUser = null;
+let todosRegistros = [];
+
+// Inicializa Google Identity Services
+window.onload = function(){
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+
+  // Revisa si había sesión guardada
+  const saved = sessionStorage.getItem('pemUser');
+  if(saved){
+    currentUser = JSON.parse(saved);
+    mostrarApp();
+  }
+};
+
+function iniciarSesion(){
+  google.accounts.id.prompt((notification) => {
+    if(notification.isNotDisplayed() || notification.isSkippedMoment()){
+      // Fallback: popup manual
+      google.accounts.id.renderButton(
+        document.getElementById('googleSignInBtn'),
+        {theme:'outline', size:'large', width:340, text:'continue_with'}
+      );
+    }
+  });
+}
+
+// Decodifica el JWT de Google
+function parseJwt(token){
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  const json = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  return JSON.parse(json);
+}
+
+function handleCredential(response){
+  const payload = parseJwt(response.credential);
+  currentUser = {
+    name: payload.name,
+    email: payload.email,
+    picture: payload.picture,
+    sub: payload.sub
+  };
+  sessionStorage.setItem('pemUser', JSON.stringify(currentUser));
+  mostrarApp();
+}
+
+function mostrarApp(){
+  document.getElementById('loginWall').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  // Rellenar datos del usuario
+  document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
+  document.getElementById('userPhoto').src = currentUser.picture || '';
+  document.getElementById('responsable').value = currentUser.name;
+  document.getElementById('email').value = currentUser.email;
+}
+
+function cerrarSesion(){
+  google.accounts.id.disableAutoSelect();
+  sessionStorage.removeItem('pemUser');
+  currentUser = null;
+  document.getElementById('loginWall').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function showTab(t){
+  document.getElementById('tab-form').classList.toggle('hidden', t !== 'form');
+  document.getElementById('tab-hist').classList.toggle('hidden', t !== 'hist');
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active', (t==='form' && i===0)||(t==='hist' && i===1));
+  });
+  if(t === 'hist') cargarHistorial();
+}
+
+// ══════════════════════════════════════
+// ENVÍO DEL FORMULARIO
+// ══════════════════════════════════════
+function enviar(){
+  var campos = ['institucion','lineaEstrategica','programa','meta','avance','semestre','observacion'];
+  for(var c of campos){
+    if(!document.getElementById(c).value.trim()){
+      mostrarMsg('⚠️ Complete todos los campos obligatorios (*)', 'err');
+      document.getElementById(c).focus();
+      return;
+    }
+  }
+
+  var btn = document.getElementById('btnEnviar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  var datos = {
+    fecha: new Date().toISOString().split('T')[0],
+    timestamp: new Date().toLocaleString('es-CO'),
+    googleId: currentUser ? currentUser.sub : '',
+    institucion: document.getElementById('institucion').value,
+    responsable: currentUser ? currentUser.name : document.getElementById('responsable').value,
+    cargo: document.getElementById('cargo').value,
+    email: currentUser ? currentUser.email : document.getElementById('email').value,
+    telefono: document.getElementById('telefono').value,
+    lineaEstrategica: document.getElementById('lineaEstrategica').value,
+    programa: document.getElementById('programa').value,
+    componente: document.getElementById('componente').value,
+    meta: document.getElementById('meta').value,
+    avance: document.getElementById('avance').value,
+    semestre: document.getElementById('semestre').value,
+    poblacion: document.getElementById('poblacion').value,
+    observacion: document.getElementById('observacion').value,
+    evidencia: document.getElementById('evidencia').value,
+    dificultades: document.getElementById('dificultades').value
+  };
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(datos),
+    headers: {'Content-Type':'text/plain;charset=utf-8'}
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.status === 'ok'){
+      mostrarMsg('✅ ¡Registro enviado! Los datos fueron guardados en el sistema.', 'ok');
+      limpiarForm();
+    } else {
+      mostrarMsg('❌ Error al enviar. Intente de nuevo.', 'err');
+    }
+  })
+  .catch(e => mostrarMsg('❌ Error de conexión: ' + e.message, 'err'))
+  .finally(() => {
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar Registro';
+  });
+}
+
+function mostrarMsg(texto, tipo){
+  var m = document.getElementById('msg');
+  m.className = 'msg ' + tipo;
+  m.textContent = texto;
+  m.style.display = 'block';
+  setTimeout(() => { m.style.display = 'none'; }, 6000);
+}
+
+function limpiarForm(){
+  ['institucion','cargo','telefono','lineaEstrategica','programa','componente',
+   'meta','avance','semestre','poblacion','observacion','evidencia','dificultades']
+  .forEach(id => { document.getElementById(id).value = ''; });
+  // Restaurar datos del usuario
+  if(currentUser){
+    document.getElementById('responsable').value = currentUser.name;
+    document.getElementById('email').value = currentUser.email;
+  }
+}
+
+// ══════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════
+function cargarHistorial(){
+  var div = document.getElementById('historial');
+  div.innerHTML = '<div class="loading">⏳ Cargando registros del PEM...</div>';
+
+  fetch(API_URL)
+    .then(r => r.json())
+    .then(d => {
+      todosRegistros = d.data || [];
+      llenarFiltros();
+      mostrarRegistros(todosRegistros);
+    })
+    .catch(e => {
+      div.innerHTML = '<div class="msg err" style="display:block">❌ Error al cargar: ' + e.message + '</div>';
+    });
+}
+
+function llenarFiltros(){
+  var sel = document.getElementById('filtroInst');
+  var insts = [...new Set(todosRegistros.map(r => r.institucion).filter(Boolean))];
+  sel.innerHTML = '<option value="">Todas las instituciones</option>';
+  insts.forEach(i => sel.innerHTML += '<option>' + i + '</option>');
+}
+
+function filtrar(){
+  var inst = document.getElementById('filtroInst').value;
+  var linea = document.getElementById('filtroLinea').value;
+  var sem = document.getElementById('filtroSemestre').value;
+  var soloMios = document.getElementById('soloMios').checked;
+
+  var filtrados = todosRegistros.filter(r => {
+    if(inst && r.institucion !== inst) return false;
+    if(linea && !r.lineaEstrategica.startsWith(linea)) return false;
+    if(sem && r.semestre !== sem) return false;
+    if(soloMios && currentUser && r.email !== currentUser.email) return false;
+    return true;
+  });
+  mostrarRegistros(filtrados);
+}
+
+function mostrarRegistros(regs){
+  var div = document.getElementById('historial');
+  if(!regs.length){
+    div.innerHTML = '<div class="empty"><span>📭</span>No hay registros con ese filtro.<br>Los registros aparecerán aquí cuando se envíen.</div>';
+    return;
+  }
+
+  var html = '<p style="font-size:0.82rem;color:#888;margin-bottom:12px">Mostrando ' + regs.length + ' registro(s)</p>';
+  [...regs].reverse().forEach(r => {
+    var pct = parseInt(r.avance) || 0;
+    var color = pct < 30 ? '#e74c3c' : pct < 70 ? '#f39c12' : '#27ae60';
+    var esMio = currentUser && r.email === currentUser.email;
+    html += '<div class="historial-item">';
+    html += '<h3>🏫 ' + (r.institucion || 'Sin nombre') + (esMio ? ' <span style="font-size:0.7rem;background:#27ae60;color:#fff;padding:2px 8px;border-radius:10px">Mi registro</span>' : '') + '</h3>';
+    html += '<p><span class="badge">' + (r.lineaEstrategica || 'N/A').substring(0,25) + '</span>';
+    html += '<span class="badge" style="background:#27ae60">' + (r.semestre || '') + '</span></p>';
+    html += '<p><strong>Programa:</strong> ' + (r.programa || 'N/A') + '</p>';
+    if(r.componente) html += '<p><strong>Proyecto:</strong> ' + r.componente + '</p>';
+    html += '<p><strong>Meta:</strong> ' + (r.meta || 'N/A') + '</p>';
+    html += '<p><strong>Avance:</strong> ' + (r.avance || '0%') + '</p>';
+    html += '<div class="avance-bar"><div class="avance-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
+    html += '<p style="margin-top:8px"><strong>Avance reportado:</strong> ' + (r.observacion || '-') + '</p>';
+    if(r.poblacion) html += '<p><strong>Población beneficiada:</strong> ' + r.poblacion + ' personas</p>';
+    html += '<p><strong>Responsable:</strong> ' + (r.responsable || '-') + ' (' + (r.cargo || 'sin cargo') + ') | <strong>Fecha:</strong> ' + (r.fecha || '-') + '</p>';
+    if(r.dificultades) html += '<p style="color:#c0392b"><strong>⚠ Dificultades:</strong> ' + r.dificultades + '</p>';
+    if(r.evidencia) html += '<p><a href="' + r.evidencia + '" target="_blank" style="color:#2e86c1">🔗 Ver evidencia</a></p>';
+    html += '</div>';
+  });
+  div.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
