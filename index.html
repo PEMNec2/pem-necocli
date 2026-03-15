@@ -1,0 +1,869 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard PEM Necoclí 2025-2035</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+:root{--primary:#1e3a5f;--secondary:#2d6a4f;--accent:#e9c46a;--danger:#e76f51;--info:#457b9d;--light:#f8f9fa;--success:#2d6a4f;--warning:#e9c46a;--bg:#f0f2f5}
+body{background:var(--bg);color:#333}
+.sidebar{width:260px;min-height:100vh;background:linear-gradient(180deg,#1e3a5f 0%,#0d1b2a 100%);position:fixed;left:0;top:0;z-index:50;transition:transform .3s}
+.sidebar.collapsed{transform:translateX(-260px)}
+.main-content{margin-left:260px;transition:margin-left .3s;min-height:100vh}
+.main-content.expanded{margin-left:0}
+.nav-item{padding:12px 20px;color:#a8c6df;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s;border-left:3px solid transparent;font-size:14px}
+.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--accent)}
+.nav-item i{width:20px;text-align:center}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+.kpi-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:20px;text-align:center;border-top:4px solid var(--primary)}
+.kpi-card .value{font-size:2rem;font-weight:800;color:var(--primary)}
+.kpi-card .label{font-size:.8rem;color:#666;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.progress-bar{height:10px;background:#e9ecef;border-radius:5px;overflow:hidden;position:relative}
+.progress-fill{height:100%;border-radius:5px;transition:width .5s ease}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-green{background:#d4edda;color:#155724}
+.badge-yellow{background:#fff3cd;color:#856404}
+.badge-red{background:#f8d7da;color:#721c24}
+.badge-blue{background:#d1ecf1;color:#0c5460}
+.tab-btn{padding:8px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:500;border-bottom:2px solid transparent;color:#666;transition:all .2s}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.page{display:none}.page.active{display:block}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid #dee2e6}
+td{padding:10px 12px;border-bottom:1px solid #eee;font-size:13px}
+tr:hover{background:#f8f9fa}
+.gauge-container{position:relative;width:200px;height:100px;margin:0 auto}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:30px;max-width:700px;width:95%;max-height:85vh;overflow-y:auto}
+select,input[type="number"]{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;width:100%}
+.btn{padding:8px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#2d4a6f}
+.btn-success{background:var(--secondary);color:#fff}.btn-success:hover{background:#3d8a6f}
+.btn-outline{background:transparent;border:1px solid #ddd;color:#555}.btn-outline:hover{background:#f8f9fa}
+.line-indicator{width:8px;height:40px;border-radius:4px;display:inline-block;margin-right:8px}
+.tooltip-custom{position:relative}.tooltip-custom:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:10}
+.search-input{padding:10px 16px 10px 40px;border:1px solid #ddd;border-radius:10px;width:100%;font-size:14px;background:#fff}
+.hamburger{display:none;position:fixed;top:15px;left:15px;z-index:60;background:var(--primary);color:#fff;border:none;border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:18px}
+@media(max-width:768px){.sidebar{transform:translateX(-260px)}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0!important}.hamburger{display:flex;align-items:center;justify-content:center}}
+.animate-in{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ring-chart{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.ring-chart canvas{transform:rotate(-90deg)}
+.ring-chart .center-text{position:absolute;font-size:1.2rem;font-weight:700}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,.1)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:16px">N</div>
+      <div><div style="color:#fff;font-weight:700;font-size:15px">PEM Necoclí</div><div style="color:#a8c6df;font-size:11px">2025 – 2035</div></div>
+    </div>
+  </div>
+  <div style="padding:10px 0">
+    <div class="nav-item active" onclick="showPage('overview',this)"><i class="fas fa-chart-pie"></i>Panel General</div>
+    <div class="nav-item" onclick="showPage('lines',this)"><i class="fas fa-layer-group"></i>Líneas Estratégicas</div>
+    <div class="nav-item" onclick="showPage('programs',this)"><i class="fas fa-project-diagram"></i>Programas</div>
+    <div class="nav-item" onclick="showPage('projects',this)"><i class="fas fa-tasks"></i>Proyectos Articuladores</div>
+    <div class="nav-item" onclick="showPage('institutions',this)"><i class="fas fa-school"></i>Instituciones Educativas</div>
+    <div class="nav-item" onclick="showPage('components',this)"><i class="fas fa-puzzle-piece"></i>Componentes</div>
+    <div class="nav-item" onclick="showPage('icepem',this)"><i class="fas fa-gauge-high"></i>ICE-PEM</div>
+    <div class="nav-item" onclick="showPage('timeline',this)"><i class="fas fa-calendar-alt"></i>Cronograma</div>
+    <div class="nav-item" onclick="showPage('dataentry',this)"><i class="fas fa-edit"></i>Registro de Avances</div>
+  </div>
+  <div style="padding:15px 20px;border-top:1px solid rgba(255,255,255,.1);position:absolute;bottom:0;width:100%">
+    <div style="color:#a8c6df;font-size:11px"><i class="fas fa-info-circle"></i> Mesa de Educación Municipal</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content" id="mainContent">
+  <!-- HEADER -->
+  <div style="background:#fff;padding:15px 30px;border-bottom:1px solid #e9ecef;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <h1 style="font-size:18px;font-weight:700;color:var(--primary)">Sistema de Seguimiento y Evaluación</h1>
+      <p style="font-size:12px;color:#888">Plan Educativo Municipal de Necoclí 2025–2035 | Corte: <span id="corteDate"></span></p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <select id="yearFilter" onchange="filterByYear()" style="padding:6px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option>
+      </select>
+      <a href="formulario.html" style="text-decoration:none"><button class="btn btn-success" style="background:#2d6a4f"><i class="fas fa-edit"></i> Registrar Avance</button></a>
+      <button class="btn btn-primary" onclick="exportReport()"><i class="fas fa-download"></i> Exportar</button>
+    </div>
+  </div>
+
+  <div style="padding:20px 30px;max-width:1400px;margin:0 auto">
+
+    <!-- PAGE: OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="animate-in">
+        <!-- KPI ROW -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+          <div class="kpi-card" style="border-top-color:#1e3a5f">
+            <div class="value" id="kpi-ice">0</div>
+            <div class="label">ICE-PEM Global</div>
+            <div style="margin-top:8px"><span class="badge badge-blue" id="kpi-ice-status">En construcción</span></div>
+          </div>
+          <div class="kpi-card" style="border-top-color:#2d6a4f">
+            <div class="value" id="kpi-students">13,088</div>
+            <div class="label">Estudiantes Matriculados</div>
+          </div>
+          <div class="kpi-card" style="border-top-color:#e9c46a">
+            <div class="value" id="kpi-institutions">19</div>
+            <div class="label">Establecimientos Educativos</div>
+          </div>
+          <div class="kpi-card" style="border-top-color:#457b9d">
+            <div class="value" id="kpi-seats">127</div>
+            <div class="label">Sedes Educativas</div>
+          </div>
+          <div class="kpi-card" style="border-top-color:#e76f51">
+            <div class="value" id="kpi-projects">20</div>
+            <div class="label">Proyectos Articuladores</div>
+          </div>
+        </div>
+
+        <!-- LINES PROGRESS -->
+        <div class="card">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--primary)"><i class="fas fa-layer-group"></i> Avance por Línea Estratégica</h3>
+          <div id="linesProgress"></div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px">
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Distribución por Línea Estratégica</h3>
+            <canvas id="chartLines" height="250"></canvas>
+          </div>
+          <div class="card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Avance por Programa</h3>
+            <canvas id="chartPrograms" height="250"></canvas>
+          </div>
+        </div>
+
+        <!-- INSTITUTION SUMMARY -->
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--primary)"><i class="fas fa-school"></i> Avance por Institución Educativa</h3>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Institución</th><th>Zona</th><th>Estudiantes</th><th>Sedes</th><th>Avance L1</th><th>Avance L2</th><th>Avance L3</th><th>Avance L4</th><th>Promedio</th><th>Estado</th></tr></thead>
+              <tbody id="instTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TOP ALERTS -->
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--danger)"><i class="fas fa-exclamation-triangle"></i> Alertas y Acciones Prioritarias</h3>
+          <div id="alertsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LINES -->
+    <div class="page" id="page-lines">
+      <div class="animate-in" id="linesDetail"></div>
+    </div>
+
+    <!-- PAGE: PROGRAMS -->
+    <div class="page" id="page-programs">
+      <div class="animate-in" id="programsDetail"></div>
+    </div>
+
+    <!-- PAGE: PROJECTS -->
+    <div class="page" id="page-projects">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px">Proyectos Articuladores (PA)</h2>
+        <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <select id="filterProjectLine" onchange="renderProjects()" style="padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+            <option value="all">Todas las líneas</option>
+            <option value="L1">L1 - Equidad y Trayectorias</option>
+            <option value="L2">L2 - Calidad e Innovación</option>
+            <option value="L3">L3 - Identidad y Pertinencia</option>
+            <option value="L4">L4 - Gobernanza</option>
+          </select>
+        </div>
+        <div id="projectsList"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: INSTITUTIONS -->
+    <div class="page" id="page-institutions">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px">Seguimiento por Institución Educativa</h2>
+        <select id="instSelect" onchange="renderInstitutionDetail()" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%;max-width:500px;margin-bottom:16px"></select>
+        <div id="instDetail"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: COMPONENTS -->
+    <div class="page" id="page-components">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px">Componentes e Iniciativas (74 acciones)</h2>
+        <div style="position:relative;margin-bottom:16px">
+          <i class="fas fa-search" style="position:absolute;left:14px;top:12px;color:#aaa"></i>
+          <input class="search-input" id="componentSearch" placeholder="Buscar componente..." oninput="filterComponents()">
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Componente</th><th>Proyecto</th><th>Programa</th><th>Línea</th><th>Peso %</th><th>Avance</th><th>Estado</th></tr></thead><tbody id="compTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PAGE: ICE-PEM -->
+    <div class="page" id="page-icepem">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:8px">Índice Compuesto de Ejecución ICE-PEM</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:20px">Meta 2032: ICE-PEM ≥ 60 puntos. Umbrales mínimos por dimensión no compensables.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+          <div class="card" style="text-align:center">
+            <canvas id="gaugeChart" height="200"></canvas>
+            <div style="font-size:2.5rem;font-weight:800;color:var(--primary);margin-top:-20px" id="iceValue">0.0</div>
+            <div style="font-size:12px;color:#888">ICE-PEM GLOBAL</div>
+          </div>
+          <div>
+            <div class="card" id="dimA"><h4 style="font-weight:600;font-size:14px;margin-bottom:8px">A. Resultados Programáticos (40%)</h4><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#1e3a5f"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#888"><span>Umbral: ≥55</span><span id="dimAVal">0</span></div></div>
+            <div class="card" id="dimB"><h4 style="font-weight:600;font-size:14px;margin-bottom:8px">B. Inversión y Gestión (25%)</h4><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#2d6a4f"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#888"><span>Umbral: ≥55</span><span id="dimBVal">0</span></div></div>
+            <div class="card" id="dimC"><h4 style="font-weight:600;font-size:14px;margin-bottom:8px">C. Gobernanza (20%)</h4><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#457b9d"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#888"><span>Umbral: ≥55</span><span id="dimCVal">0</span></div></div>
+            <div class="card" id="dimD"><h4 style="font-weight:600;font-size:14px;margin-bottom:8px">D. Habilitadores (15%)</h4><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#e76f51"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:#888"><span>Umbral: ≥50</span><span id="dimDVal">0</span></div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Fórmula: ICE-PEM = 0.40·A + 0.25·B + 0.20·C + 0.15·D</h3>
+          <canvas id="iceRadar" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: TIMELINE -->
+    <div class="page" id="page-timeline">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px">Cronograma y Hitos del PEM</h2>
+        <div id="timelineContent"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: DATA ENTRY -->
+    <div class="page" id="page-dataentry">
+      <div class="animate-in">
+        <h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:8px">Registro de Avances</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:20px">Actualice el porcentaje de avance de cada componente por institución educativa.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+          <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Institución</label><select id="entryInst" onchange="loadEntryData()" style="width:100%"></select></div>
+          <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Línea Estratégica</label><select id="entryLine" onchange="loadEntryData()" style="width:100%"><option value="all">Todas</option><option value="L1">L1</option><option value="L2">L2</option><option value="L3">L3</option><option value="L4">L4</option></select></div>
+          <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Semestre</label><select id="entrySem" style="width:100%"><option>2025-S1</option><option>2025-S2</option><option>2026-S1</option><option>2026-S2</option></select></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>#</th><th>Componente</th><th>Proyecto</th><th>Avance Actual %</th><th>Nuevo Avance %</th><th>Observación</th></tr></thead><tbody id="entryTable"></tbody></table>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-success" onclick="saveEntryData()"><i class="fas fa-save"></i> Guardar Avances</button>
+          <button class="btn btn-outline" onclick="resetEntryData()"><i class="fas fa-undo"></i> Restablecer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="font-size:18px;font-weight:700;color:var(--primary)" id="modalTitle">Detalle</h3>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification" style="position:fixed;top:20px;right:20px;background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,.15)"><i class="fas fa-check-circle"></i> <span id="notifText"></span></div>
+
+<script>
+// =============== DATA MODEL ===============
+const lineColors = ['#1e3a5f','#2d6a4f','#e9c46a','#e76f51'];
+const lineNames = {
+  L1:'Educación para la Equidad y las Trayectorias Completas',
+  L2:'Calidad Educativa con Innovación y Sostenibilidad',
+  L3:'Educación con Identidad y Pertinencia Territorial',
+  L4:'Gestión Educativa Participativa y con Gobernanza'
+};
+const lineWeights = {L1:25,L2:25,L3:20,L4:30};
+
+const programs = [
+  {id:'P1',name:'Acceso y Equidad Educativa',line:'L1'},
+  {id:'P2',name:'Desarrollo Personal, Familiar y Comunitario',line:'L1'},
+  {id:'P3',name:'Calidad, Innovación y Mejora Continua',line:'L2'},
+  {id:'P4',name:'Infraestructura y Recursos Educativos',line:'L2'},
+  {id:'P5',name:'Pertinencia y Contextualización Educativa',line:'L3'},
+  {id:'P6',name:'Gobernanza y Monitoreo del PEM',line:'L4'}
+];
+
+const projects = [
+  {id:'PA-1',name:'Trayectorias Educativas Completas',program:'P1',line:'L1'},
+  {id:'PA-2',name:'Centros de Recursos para la Inclusión',program:'P1',line:'L1'},
+  {id:'PA-3',name:'Ruta de Cobertura Rural',program:'P1',line:'L1'},
+  {id:'PA-4',name:'Habilidades para la Vida',program:'P1',line:'L1'},
+  {id:'PA-5',name:'Puentes a la Educación Terciaria',program:'P1',line:'L1'},
+  {id:'PA-6',name:'Acompañamiento a Familias',program:'P2',line:'L1'},
+  {id:'PA-7',name:'Educación en Convivencia y Ética',program:'P2',line:'L1'},
+  {id:'PA-8',name:'Voluntariado y Participación Comunitaria',program:'P2',line:'L1'},
+  {id:'PA-9',name:'Plan de Mejora Continua',program:'P3',line:'L2'},
+  {id:'PA-10',name:'Formación y Acompañamiento Docente',program:'P3',line:'L2'},
+  {id:'PA-11',name:'Centro de Innovación / Dotación Científica',program:'P3',line:'L2'},
+  {id:'PA-12',name:'Plan Maestro de Infraestructura',program:'P4',line:'L2'},
+  {id:'PA-13',name:'Dotación TIC Integral',program:'P4',line:'L2'},
+  {id:'PA-14',name:'Laboratorios STEAM / Alianzas Sostenibilidad',program:'P4',line:'L2'},
+  {id:'PA-15',name:'Cátedra Municipal y Multiculturalidad',program:'P5',line:'L3'},
+  {id:'PA-16',name:'PEI Actualizados y Currículos Contextualizados',program:'P5',line:'L3'},
+  {id:'PA-17',name:'Aulas Abiertas / Gobiernos Escolares',program:'P5',line:'L3'},
+  {id:'PA-18',name:'Clubes de Lectura y Pensamiento Crítico',program:'P5',line:'L3'},
+  {id:'PA-19',name:'Proyectos Productivos Escolares y Rurales',program:'P5',line:'L3'},
+  {id:'PA-20',name:'Participación y Gobernanza Educativa',program:'P6',line:'L4'}
+];
+
+const components = [
+  {id:1,name:'Adecuación y dotación de espacios primera infancia',pa:'PA-1',w:20},
+  {id:2,name:'Capacitación docentes atención integral primera infancia',pa:'PA-1',w:10},
+  {id:3,name:'Formación y acompañamiento a familias',pa:'PA-1',w:10},
+  {id:4,name:'Protocolos de seguridad y bienestar infantil',pa:'PA-1',w:10},
+  {id:5,name:'Adecuación de espacios accesibles',pa:'PA-2',w:10},
+  {id:6,name:'Dotación TIC adaptativas y materiales braille/LSP',pa:'PA-2',w:10},
+  {id:7,name:'Banco de ayudas técnicas',pa:'PA-2',w:10},
+  {id:8,name:'Formación docentes y familias en educación inclusiva',pa:'PA-2',w:20},
+  {id:9,name:'Transporte escolar seguro',pa:'PA-3',w:20},
+  {id:10,name:'Aulas multigrado equipadas',pa:'PA-3',w:20},
+  {id:11,name:'Docentes itinerantes y tutorías virtuales',pa:'PA-3',w:20},
+  {id:12,name:'Modelos educativos flexibles',pa:'PA-3',w:20},
+  {id:13,name:'Alimentación escolar',pa:'PA-3',w:20},
+  {id:14,name:'Módulos proyecto de vida y orientación socio-ocupacional',pa:'PA-4',w:33},
+  {id:15,name:'Educación financiera',pa:'PA-4',w:33},
+  {id:16,name:'Mentorías por egresados',pa:'PA-4',w:34},
+  {id:17,name:'Acompañamiento inscripción, becas y pruebas',pa:'PA-5',w:33},
+  {id:18,name:'Alianzas con IES y ETDH',pa:'PA-5',w:33},
+  {id:19,name:'Clubes de lectura crítica y pensamiento lógico',pa:'PA-5',w:34},
+  {id:20,name:'Escuela de padres',pa:'PA-6',w:33},
+  {id:21,name:'Atención psicosocial y jurídica',pa:'PA-6',w:33},
+  {id:22,name:'Biblioteca de recursos físicos y digitales',pa:'PA-6',w:34},
+  {id:23,name:'Programa Aulas sin violencia',pa:'PA-7',w:50},
+  {id:24,name:'Mediadores escolares',pa:'PA-7',w:50},
+  {id:25,name:'Plataforma de voluntariado estudiantil',pa:'PA-8',w:25},
+  {id:26,name:'Alianzas con privados y públicos',pa:'PA-8',w:25},
+  {id:27,name:'Jornadas de servicio social',pa:'PA-8',w:25},
+  {id:28,name:'Alfabetización',pa:'PA-8',w:25},
+  {id:29,name:'Sistema de datos y tablero de control BI',pa:'PA-9',w:33},
+  {id:30,name:'Simulacros ICFES trimestrales',pa:'PA-9',w:33},
+  {id:31,name:'Planes de mejora por área',pa:'PA-9',w:34},
+  {id:32,name:'Diagnóstico de necesidades docentes',pa:'PA-10',w:20},
+  {id:33,name:'Ciclos de formación en competencias',pa:'PA-10',w:20},
+  {id:34,name:'Comunidades de práctica',pa:'PA-10',w:20},
+  {id:35,name:'Mentores en aula',pa:'PA-10',w:20},
+  {id:36,name:'Reconocimientos e incentivos docentes',pa:'PA-10',w:20},
+  {id:37,name:'Laboratorios STEAM',pa:'PA-11',w:40},
+  {id:38,name:'Repositorio de recursos educativos abiertos',pa:'PA-11',w:30},
+  {id:39,name:'Semilleros de investigación estudiantil',pa:'PA-11',w:30},
+  {id:40,name:'Laboratorios de química/física',pa:'PA-11',w:50},
+  {id:41,name:'Soporte técnico permanente y formación',pa:'PA-11',w:50},
+  {id:42,name:'Diagnóstico técnico-financiero infraestructura',pa:'PA-12',w:20},
+  {id:43,name:'Estándares de accesibilidad universal',pa:'PA-12',w:40},
+  {id:44,name:'Gestión de recursos con Nación y cooperación',pa:'PA-12',w:40},
+  {id:45,name:'Kits de aula digital',pa:'PA-13',w:40},
+  {id:46,name:'Plataforma LMS municipal',pa:'PA-13',w:30},
+  {id:47,name:'Mantenimiento preventivo TIC',pa:'PA-13',w:30},
+  {id:48,name:'Laboratorios fijos sedes urbanas',pa:'PA-14',w:35},
+  {id:49,name:'Laboratorio móvil para veredas',pa:'PA-14',w:35},
+  {id:50,name:'Clubes de robótica y ciencia',pa:'PA-14',w:30},
+  {id:51,name:'Convenios con empresas y ONG',pa:'PA-14',w:33},
+  {id:52,name:'Contratos de energía solar y agua lluvia',pa:'PA-14',w:33},
+  {id:53,name:'Convenios con jornada extendida',pa:'PA-14',w:34},
+  {id:54,name:'Diseño curricular colaborativo',pa:'PA-15',w:33},
+  {id:55,name:'Materiales multilingües',pa:'PA-15',w:33},
+  {id:56,name:'Salidas pedagógicas al territorio',pa:'PA-15',w:34},
+  {id:57,name:'Matrices de pertinencia',pa:'PA-16',w:25},
+  {id:58,name:'Secuencias didácticas diferenciadas',pa:'PA-16',w:25},
+  {id:59,name:'Evaluación por competencias',pa:'PA-16',w:25},
+  {id:60,name:'Sistemas institucionales de evaluación revisados',pa:'PA-16',w:25},
+  {id:61,name:'Huertas escolares y viveros',pa:'PA-17',w:33},
+  {id:62,name:'Clases en espacios naturales',pa:'PA-17',w:33},
+  {id:63,name:'Salidas pedagógicas',pa:'PA-17',w:34},
+  {id:64,name:'Capacitación de representantes estudiantiles',pa:'PA-17',w:33},
+  {id:65,name:'Plan anual de participación',pa:'PA-17',w:33},
+  {id:66,name:'Observatorios estudiantiles',pa:'PA-17',w:34},
+  {id:67,name:'Clubes de lectura temáticos',pa:'PA-18',w:70},
+  {id:68,name:'Guías de lectura y análisis crítico',pa:'PA-18',w:30},
+  {id:69,name:'Huertas, piscicultura, agro-emprendimientos',pa:'PA-19',w:33},
+  {id:70,name:'Feria anual de ideas de negocio',pa:'PA-19',w:34},
+  {id:71,name:'Articulación con SENA',pa:'PA-19',w:33},
+  {id:72,name:'Mesa de Educación y Junta Municipal Educativa',pa:'PA-20',w:33},
+  {id:73,name:'Sistemas de información y tableros de control',pa:'PA-20',w:33},
+  {id:74,name:'Participación comunitaria e institucional',pa:'PA-20',w:34}
+];
+
+const institutions = [
+  {id:'IE01',name:'CER Bobal La Playa',students:342,seats:4,zone:'Rural'},
+  {id:'IE02',name:'CER El Paraíso',students:145,seats:5,zone:'Rural'},
+  {id:'IE03',name:'CER Melilto Arriba',students:161,seats:3,zone:'Rural'},
+  {id:'IE04',name:'CER Vale Pavas',students:166,seats:3,zone:'Rural'},
+  {id:'IE05',name:'IER Caribia',students:631,seats:7,zone:'Rural'},
+  {id:'IE06',name:'IE Antonio Roldán Betancur',students:1550,seats:3,zone:'Urbana-Rural'},
+  {id:'IE07',name:'IER El Totumo',students:1539,seats:8,zone:'Rural'},
+  {id:'IE08',name:'IER Melilto',students:636,seats:6,zone:'Rural'},
+  {id:'IE09',name:'IER Mulaticos Piedrecitas',students:1196,seats:26,zone:'Rural'},
+  {id:'IE10',name:'IER Mulatos',students:683,seats:6,zone:'Rural'},
+  {id:'IE11',name:'IER San Sebastián de Urabá',students:548,seats:6,zone:'Rural'},
+  {id:'IE12',name:'IER Tulapita',students:434,seats:8,zone:'Rural'},
+  {id:'IE13',name:'IER Zapata',students:924,seats:6,zone:'Rural'},
+  {id:'IE14',name:'IER Indígena José Elías Suárez',students:496,seats:6,zone:'Rural'},
+  {id:'IE15',name:'IE Eduardo Espitia Romero',students:1624,seats:4,zone:'Urbana-Rural'},
+  {id:'IE16',name:'IER La Comarca',students:513,seats:7,zone:'Rural'},
+  {id:'IE17',name:'IER Las Changas',students:492,seats:8,zone:'Rural'},
+  {id:'IE18',name:'IER Mello Villavicencio',students:412,seats:6,zone:'Rural'},
+  {id:'IE19',name:'IER Pueblo Nuevo',students:592,seats:5,zone:'Rural'}
+];
+
+// Progress data: institution -> component -> percentage
+let progressData = {};
+function initProgress(){
+  institutions.forEach(inst=>{
+    progressData[inst.id]={};
+    components.forEach(c=>{
+      progressData[inst.id][c.id]=Math.floor(Math.random()*35);
+    });
+  });
+}
+initProgress();
+
+// ICE-PEM dimensions
+let iceDimensions = {A:28,B:22,C:30,D:25};
+
+// =============== UTILITY FUNCTIONS ===============
+function getColor(val){return val>=70?'#2d6a4f':val>=40?'#e9c46a':'#e76f51'}
+function getBadge(val){return val>=70?'badge-green':val>=40?'badge-yellow':'badge-red'}
+function getStatus(val){return val>=70?'En curso':val>=40?'En progreso':'Crítico'}
+function getPALine(paId){const p=projects.find(x=>x.id===paId);return p?p.line:'L1'}
+function getPAProgram(paId){const p=projects.find(x=>x.id===paId);return p?p.program:'P1'}
+
+function calcComponentAvg(compId){
+  let sum=0,count=0;
+  institutions.forEach(inst=>{
+    if(progressData[inst.id]&&progressData[inst.id][compId]!==undefined){sum+=progressData[inst.id][compId];count++;}
+  });
+  return count?Math.round(sum/count):0;
+}
+
+function calcPAAvg(paId){
+  const comps=components.filter(c=>c.pa===paId);
+  if(!comps.length)return 0;
+  let total=0,wTotal=0;
+  comps.forEach(c=>{const avg=calcComponentAvg(c.id);total+=avg*c.w;wTotal+=c.w;});
+  return wTotal?Math.round(total/wTotal):0;
+}
+
+function calcLineAvg(lineId){
+  const pas=projects.filter(p=>p.line===lineId);
+  if(!pas.length)return 0;
+  let sum=0;pas.forEach(p=>sum+=calcPAAvg(p.id));
+  return Math.round(sum/pas.length);
+}
+
+function calcProgramAvg(progId){
+  const pas=projects.filter(p=>p.program===progId);
+  if(!pas.length)return 0;
+  let sum=0;pas.forEach(p=>sum+=calcPAAvg(p.id));
+  return Math.round(sum/pas.length);
+}
+
+function calcInstAvg(instId,lineId){
+  const pas=lineId?projects.filter(p=>p.line===lineId):projects;
+  let sum=0,count=0;
+  pas.forEach(pa=>{
+    const comps2=components.filter(c=>c.pa===pa.id);
+    comps2.forEach(c=>{
+      if(progressData[instId]&&progressData[instId][c.id]!==undefined){sum+=progressData[instId][c.id];count++;}
+    });
+  });
+  return count?Math.round(sum/count):0;
+}
+
+function calcICE(){
+  const A=Math.round((calcLineAvg('L1')*0.25+calcLineAvg('L2')*0.25+calcLineAvg('L3')*0.20+calcLineAvg('L4')*0.30)/0.6);
+  const B=iceDimensions.B;const C=iceDimensions.C;const D=iceDimensions.D;
+  iceDimensions.A=Math.min(A,100);
+  return Math.round(0.40*iceDimensions.A+0.25*B+0.20*C+0.15*D);
+}
+
+function notify(msg){
+  const n=document.getElementById('notification');
+  document.getElementById('notifText').textContent=msg;
+  n.style.display='block';
+  setTimeout(()=>n.style.display='none',3000);
+}
+
+// =============== NAVIGATION ===============
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(id==='lines')renderLines();
+  if(id==='programs')renderProgramsPage();
+  if(id==='projects')renderProjects();
+  if(id==='institutions')renderInstitutions();
+  if(id==='components')renderComponents();
+  if(id==='icepem')renderICE();
+  if(id==='timeline')renderTimeline();
+  if(id==='dataentry')renderDataEntry();
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('mainContent').classList.toggle('expanded');
+}
+
+function closeModal(){document.getElementById('detailModal').classList.remove('show')}
+
+// =============== RENDER OVERVIEW ===============
+function renderOverview(){
+  document.getElementById('corteDate',).textContent=new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const ice=calcICE();
+  document.getElementById('kpi-ice').textContent=ice;
+  document.getElementById('kpi-ice-status').textContent=ice>=60?'Meta alcanzada':ice>=40?'En progreso':'Requiere atención';
+  document.getElementById('kpi-ice-status').className='badge '+(ice>=60?'badge-green':ice>=40?'badge-yellow':'badge-red');
+
+  // Lines progress
+  let linesHTML='';
+  ['L1','L2','L3','L4'].forEach((lid,i)=>{
+    const avg=calcLineAvg(lid);
+    linesHTML+=`<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div class="line-indicator" style="background:${lineColors[i]}"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:13px;font-weight:600">${lid} - ${lineNames[lid].substring(0,50)}...</span>
+          <span style="font-size:13px;font-weight:700;color:${getColor(avg)}">${avg}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${avg}%;background:${lineColors[i]}"></div></div>
+      </div>
+      <span class="badge ${getBadge(avg)}">${getStatus(avg)}</span>
+    </div>`;
+  });
+  document.getElementById('linesProgress').innerHTML=linesHTML;
+
+  // Institution table
+  let tbl='';
+  institutions.forEach(inst=>{
+    const l1=calcInstAvg(inst.id,'L1'),l2=calcInstAvg(inst.id,'L2'),l3=calcInstAvg(inst.id,'L3'),l4=calcInstAvg(inst.id,'L4');
+    const avg=Math.round((l1+l2+l3+l4)/4);
+    tbl+=`<tr style="cursor:pointer" onclick="showPage('institutions',document.querySelectorAll('.nav-item')[4]);document.getElementById('instSelect').value='${inst.id}';renderInstitutionDetail()">
+      <td style="font-weight:600;font-size:12px">${inst.name}</td>
+      <td><span class="badge ${inst.zone==='Rural'?'badge-green':'badge-blue'}">${inst.zone}</span></td>
+      <td>${inst.students.toLocaleString()}</td><td>${inst.seats}</td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${l1}%;background:${lineColors[0]}"></div></div> <small>${l1}%</small></td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${l2}%;background:${lineColors[1]}"></div></div> <small>${l2}%</small></td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${l3}%;background:${lineColors[2]}"></div></div> <small>${l3}%</small></td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${l4}%;background:${lineColors[3]}"></div></div> <small>${l4}%</small></td>
+      <td style="font-weight:700;color:${getColor(avg)}">${avg}%</td>
+      <td><span class="badge ${getBadge(avg)}">${getStatus(avg)}</span></td>
+    </tr>`;
+  });
+  document.getElementById('instTable').innerHTML=tbl;
+
+  // Alerts
+  let alerts='';
+  projects.forEach(pa=>{
+    const avg=calcPAAvg(pa.id);
+    if(avg<30)alerts+=`<div style="padding:10px;border-left:4px solid var(--danger);background:#fff5f5;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px"><strong>${pa.id} ${pa.name}</strong> — Avance: <span style="color:var(--danger);font-weight:700">${avg}%</span>. Requiere intervención inmediata.</div>`;
+  });
+  if(!alerts)alerts='<div style="padding:10px;color:#2d6a4f"><i class="fas fa-check-circle"></i> No hay alertas críticas en este momento.</div>';
+  document.getElementById('alertsList').innerHTML=alerts;
+
+  // Charts
+  renderOverviewCharts();
+}
+
+function renderOverviewCharts(){
+  const ctx1=document.getElementById('chartLines').getContext('2d');
+  if(window.chartLinesInst)window.chartLinesInst.destroy();
+  window.chartLinesInst=new Chart(ctx1,{type:'doughnut',data:{labels:['L1 Equidad','L2 Calidad','L3 Identidad','L4 Gobernanza'],datasets:[{data:[calcLineAvg('L1'),calcLineAvg('L2'),calcLineAvg('L3'),calcLineAvg('L4')],backgroundColor:lineColors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+
+  const ctx2=document.getElementById('chartPrograms').getContext('2d');
+  if(window.chartProgsInst)window.chartProgsInst.destroy();
+  window.chartProgsInst=new Chart(ctx2,{type:'bar',data:{labels:programs.map(p=>p.id),datasets:[{label:'Avance %',data:programs.map(p=>calcProgramAvg(p.id)),backgroundColor:programs.map(p=>{const l=['L1','L1','L2','L2','L3','L4'];const idx=['L1','L2','L3','L4'].indexOf(p.line);return lineColors[idx>=0?idx:0]+'CC'}),borderRadius:6}]},options:{responsive:true,scales:{y:{beginAtZero:true,max:100}},plugins:{legend:{display:false}}}});
+}
+
+// =============== RENDER LINES ===============
+function renderLines(){
+  let html='';
+  ['L1','L2','L3','L4'].forEach((lid,i)=>{
+    const avg=calcLineAvg(lid);
+    const pas=projects.filter(p=>p.line===lid);
+    html+=`<div class="card" style="border-left:5px solid ${lineColors[i]}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div><h3 style="font-size:16px;font-weight:700;color:${lineColors[i]}">${lid}. ${lineNames[lid]}</h3><p style="font-size:12px;color:#888;margin-top:2px">Peso: ${lineWeights[lid]}% | ${pas.length} proyectos articuladores</p></div>
+        <div style="text-align:right"><span style="font-size:2rem;font-weight:800;color:${getColor(avg)}">${avg}%</span><br><span class="badge ${getBadge(avg)}">${getStatus(avg)}</span></div>
+      </div>
+      <div class="progress-bar" style="margin:12px 0"><div class="progress-fill" style="width:${avg}%;background:${lineColors[i]}"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px">
+        ${pas.map(pa=>{
+          const paAvg=calcPAAvg(pa.id);
+          const compCount=components.filter(c=>c.pa===pa.id).length;
+          return `<div style="background:#f8f9fa;border-radius:8px;padding:12px;cursor:pointer" onclick="showProjectDetail('${pa.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;font-weight:600">${pa.id}</span>
+              <span style="font-size:14px;font-weight:700;color:${getColor(paAvg)}">${paAvg}%</span>
+            </div>
+            <div style="font-size:13px;font-weight:500;margin:4px 0">${pa.name}</div>
+            <div class="progress-bar" style="margin:6px 0"><div class="progress-fill" style="width:${paAvg}%;background:${getColor(paAvg)}"></div></div>
+            <div style="font-size:11px;color:#888">${compCount} componentes</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('linesDetail').innerHTML=html;
+}
+
+// =============== RENDER PROGRAMS ===============
+function renderProgramsPage(){
+  let html='<h2 style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:16px">Programas Estratégicos</h2>';
+  programs.forEach((prog,pi)=>{
+    const avg=calcProgramAvg(prog.id);
+    const pas=projects.filter(p=>p.program===prog.id);
+    const li=['L1','L2','L3','L4'].indexOf(prog.line);
+    html+=`<div class="card" style="border-left:4px solid ${lineColors[li>=0?li:0]}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+        <div><h3 style="font-size:15px;font-weight:700">${prog.id}. ${prog.name}</h3><p style="font-size:12px;color:#888">${lineNames[prog.line]} | ${pas.length} proyectos</p></div>
+        <span style="font-size:1.8rem;font-weight:800;color:${getColor(avg)}">${avg}%</span>
+      </div>
+      <div class="progress-bar" style="margin:10px 0"><div class="progress-fill" style="width:${avg}%;background:${lineColors[li>=0?li:0]}"></div></div>
+      <table style="margin-top:8px"><thead><tr><th>Proyecto</th><th>Componentes</th><th>Avance</th><th>Estado</th></tr></thead><tbody>
+      ${pas.map(pa=>{const a=calcPAAvg(pa.id);return `<tr><td style="font-weight:500">${pa.id} - ${pa.name}</td><td>${components.filter(c=>c.pa===pa.id).length}</td><td><div class="progress-bar" style="width:120px;display:inline-block"><div class="progress-fill" style="width:${a}%;background:${getColor(a)}"></div></div> ${a}%</td><td><span class="badge ${getBadge(a)}">${getStatus(a)}</span></td></tr>`}).join('')}
+      </tbody></table>
+    </div>`;
+  });
+  document.getElementById('programsDetail').innerHTML=html;
+}
+
+// =============== RENDER PROJECTS ===============
+function renderProjects(){
+  const filter=document.getElementById('filterProjectLine').value;
+  const filtered=filter==='all'?projects:projects.filter(p=>p.line===filter);
+  let html='';
+  filtered.forEach(pa=>{
+    const avg=calcPAAvg(pa.id);
+    const comps=components.filter(c=>c.pa===pa.id);
+    const li=['L1','L2','L3','L4'].indexOf(pa.line);
+    html+=`<div class="card" style="cursor:pointer" onclick="showProjectDetail('${pa.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <span class="badge" style="background:${lineColors[li]}22;color:${lineColors[li]}">${pa.line}</span>
+          <h4 style="font-size:14px;font-weight:700;margin-top:4px">${pa.id} — ${pa.name}</h4>
+          <p style="font-size:12px;color:#888;margin-top:2px">${comps.length} componentes</p>
+        </div>
+        <div style="text-align:right">
+          <span style="font-size:1.6rem;font-weight:800;color:${getColor(avg)}">${avg}%</span><br>
+          <span class="badge ${getBadge(avg)}">${getStatus(avg)}</span>
+        </div>
+      </div>
+      <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${avg}%;background:${getColor(avg)}"></div></div>
+    </div>`;
+  });
+  document.getElementById('projectsList').innerHTML=html;
+}
+
+function showProjectDetail(paId){
+  const pa=projects.find(p=>p.id===paId);
+  const comps=components.filter(c=>c.pa===paId);
+  let body=`<p style="font-size:13px;color:#888;margin-bottom:16px">${pa.line} > ${programs.find(p=>p.id===pa.program).name}</p>`;
+  body+=`<table><thead><tr><th>Componente</th><th>Peso</th><th>Avance Promedio</th><th>Estado</th></tr></thead><tbody>`;
+  comps.forEach(c=>{
+    const avg=calcComponentAvg(c.id);
+    body+=`<tr><td style="font-size:13px">${c.id}. ${c.name}</td><td>${c.w}%</td><td><div class="progress-bar" style="width:100px;display:inline-block"><div class="progress-fill" style="width:${avg}%;background:${getColor(avg)}"></div></div> ${avg}%</td><td><span class="badge ${getBadge(avg)}">${getStatus(avg)}</span></td></tr>`;
+  });
+  body+='</tbody></table>';
+  body+=`<h4 style="margin-top:20px;font-size:14px;font-weight:700">Avance por Institución</h4><table><thead><tr><th>Institución</th><th>Avance</th></tr></thead><tbody>`;
+  institutions.forEach(inst=>{
+    let sum=0,wt=0;
+    comps.forEach(c=>{sum+=(progressData[inst.id][c.id]||0)*c.w;wt+=c.w;});
+    const avg=wt?Math.round(sum/wt):0;
+    body+=`<tr><td>${inst.name}</td><td><div class="progress-bar" style="width:150px;display:inline-block"><div class="progress-fill" style="width:${avg}%;background:${getColor(avg)}"></div></div> ${avg}%</td></tr>`;
+  });
+  body+='</tbody></table>';
+  document.getElementById('modalTitle').textContent=`${pa.id} — ${pa.name}`;
+  document.getElementById('modalBody').innerHTML=body;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+// =============== RENDER INSTITUTIONS ===============
+function renderInstitutions(){
+  const sel=document.getElementById('instSelect');
+  if(!sel.options.length||sel.options.length<=1){
+    sel.innerHTML=institutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  }
+  renderInstitutionDetail();
+}
+
+function renderInstitutionDetail(){
+  const instId=document.getElementById('instSelect').value;
+  const inst=institutions.find(i=>i.id===instId);
+  if(!inst)return;
+  const avgAll=calcInstAvg(instId);
+  let html=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+    <div class="kpi-card" style="border-top-color:${getColor(avgAll)}"><div class="value" style="color:${getColor(avgAll)}">${avgAll}%</div><div class="label">Avance Global</div></div>
+    <div class="kpi-card"><div class="value">${inst.students}</div><div class="label">Estudiantes</div></div>
+    <div class="kpi-card"><div class="value">${inst.seats}</div><div class="label">Sedes</div></div>
+    <div class="kpi-card"><div class="value">${inst.zone}</div><div class="label">Zona</div></div>
+  </div>`;
+
+  html+=`<div class="card"><h4 style="font-weight:700;margin-bottom:12px">Avance por Línea Estratégica</h4>`;
+  ['L1','L2','L3','L4'].forEach((lid,i)=>{
+    const avg=calcInstAvg(instId,lid);
+    html+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600">${lid} - ${lineNames[lid].substring(0,40)}...</span><span style="font-weight:700;color:${getColor(avg)}">${avg}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${avg}%;background:${lineColors[i]}"></div></div></div>`;
+  });
+  html+=`</div>`;
+
+  html+=`<div class="card"><h4 style="font-weight:700;margin-bottom:12px">Detalle por Proyecto Articulador</h4><table><thead><tr><th>PA</th><th>Proyecto</th><th>Avance</th><th>Estado</th></tr></thead><tbody>`;
+  projects.forEach(pa=>{
+    const comps=components.filter(c=>c.pa===pa.id);
+    let sum=0,wt=0;
+    comps.forEach(c=>{sum+=(progressData[instId][c.id]||0)*c.w;wt+=c.w;});
+    const avg=wt?Math.round(sum/wt):0;
+    html+=`<tr><td><span class="badge" style="background:${lineColors[['L1','L2','L3','L4'].indexOf(pa.line)]}22;color:${lineColors[['L1','L2','L3','L4'].indexOf(pa.line)]}">${pa.id}</span></td><td style="font-size:12px">${pa.name}</td><td><div class="progress-bar" style="width:120px;display:inline-block"><div class="progress-fill" style="width:${avg}%;background:${getColor(avg)}"></div></div> ${avg}%</td><td><span class="badge ${getBadge(avg)}">${getStatus(avg)}</span></td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('instDetail').innerHTML=html;
+}
+
+// =============== RENDER COMPONENTS ===============
+function renderComponents(){
+  let html='';
+  components.forEach(c=>{
+    const avg=calcComponentAvg(c.id);
+    const pa=projects.find(p=>p.id===c.pa);
+    const prog=programs.find(p=>p.id===pa.program);
+    html+=`<tr class="comp-row" data-name="${c.name.toLowerCase()}">
+      <td>${c.id}</td><td style="font-size:12px">${c.name}</td><td><span class="badge badge-blue">${c.pa}</span></td>
+      <td style="font-size:12px">${prog.id}</td><td>${pa.line}</td><td>${c.w}%</td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block"><div class="progress-fill" style="width:${avg}%;background:${getColor(avg)}"></div></div> ${avg}%</td>
+      <td><span class="badge ${getBadge(avg)}">${getStatus(avg)}</span></td></tr>`;
+  });
+  document.getElementById('compTable').innerHTML=html;
+}
+
+function filterComponents(){
+  const q=document.getElementById('componentSearch').value.toLowerCase();
+  document.querySelectorAll('.comp-row').forEach(r=>{r.style.display=r.dataset.name.includes(q)?'':'none'});
+}
+
+// =============== RENDER ICE-PEM ===============
+function renderICE(){
+  const ice=calcICE();
+  document.getElementById('iceValue').textContent=ice.toFixed(1);
+  ['A','B','C','D'].forEach(d=>{
+    const val=iceDimensions[d];
+    document.getElementById('dim'+d).querySelector('.progress-fill').style.width=val+'%';
+    document.getElementById('dim'+d).querySelector('.progress-fill').style.background=getColor(val);
+    document.getElementById('dim'+d+'Val').textContent=val+'/100';
+  });
+
+  const ctx=document.getElementById('gaugeChart').getContext('2d');
+  if(window.gaugeInst)window.gaugeInst.destroy();
+  window.gaugeInst=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[ice,100-ice],backgroundColor:[ice>=60?'#2d6a4f':ice>=40?'#e9c46a':'#e76f51','#e9ecef'],borderWidth:0}]},options:{circumference:180,rotation:270,cutout:'75%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+
+  const ctx2=document.getElementById('iceRadar').getContext('2d');
+  if(window.radarInst)window.radarInst.destroy();
+  window.radarInst=new Chart(ctx2,{type:'radar',data:{labels:['A. Resultados','B. Inversión','C. Gobernanza','D. Habilitadores'],datasets:[{label:'ICE-PEM',data:[iceDimensions.A,iceDimensions.B,iceDimensions.C,iceDimensions.D],backgroundColor:'rgba(30,58,95,0.2)',borderColor:'#1e3a5f',pointBackgroundColor:'#1e3a5f'},{label:'Umbral Mínimo',data:[55,55,55,50],backgroundColor:'rgba(231,111,81,0.1)',borderColor:'#e76f51',borderDash:[5,5],pointBackgroundColor:'#e76f51'}]},options:{responsive:true,scales:{r:{beginAtZero:true,max:100}}}});
+}
+
+// =============== RENDER TIMELINE ===============
+function renderTimeline(){
+  const milestones=[
+    {year:'2025',items:['Aprobación PEM por Concejo Municipal','Reglamentación y Manual Operativo','Tablero Territorial v1','PTAE 2025 aprobada','Priorización PA-3/5/10/12/13']},
+    {year:'2026',items:['Roles Mesa/JUME/Comité Gestor formalizados','PTAE 2026 actualizada','Primer corte de avance diciembre']},
+    {year:'2027',items:['Pacto por la Educación 2028-2031','Banco de Proyectos para cofinanciación','Informe de seguimiento 2025-2027']},
+    {year:'2028',items:['Evaluación externa #1','PEM incorporado al PDM 2028-2031','Tablero v2','Plan Sectorial adoptado']},
+    {year:'2029',items:['Escalamiento Ruta de Cobertura Rural','Ampliación Puentes a la Terciaria','PTAE 2029 validada']},
+    {year:'2030',items:['Evaluación externa #2','Actualización Plan Plurianual 2030-2032','Informe medio ciclo']},
+    {year:'2031',items:['Libro Blanco 2025-2031','Pacto por la Educación 2032-2035','Banco de Proyectos actualizado']},
+    {year:'2032',items:['Evaluación externa #3','Hito: ICE-PEM ≥ 60','Informe de cierre y hoja de ruta 2033-2035']},
+    {year:'2033-35',items:['Fase de consolidación y sostenibilidad','Metas globales al 2035']}
+  ];
+  let html='';
+  milestones.forEach((m,i)=>{
+    const current=parseInt(m.year)<=new Date().getFullYear();
+    html+=`<div style="display:flex;gap:20px;margin-bottom:8px">
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:80px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${current?'var(--primary)':'#ddd'};color:${current?'#fff':'#888'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${m.year.substring(2)}</div>
+        ${i<milestones.length-1?'<div style="width:2px;flex:1;background:#ddd;margin:4px 0"></div>':''}
+      </div>
+      <div class="card" style="flex:1;border-left:3px solid ${current?'var(--primary)':'#ddd'}">
+        <h4 style="font-size:14px;font-weight:700;color:${current?'var(--primary)':'#888'}">${m.year}</h4>
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:#555">${m.items.map(it=>`<li style="margin-bottom:4px">${it}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  });
+  document.getElementById('timelineContent').innerHTML=html;
+}
+
+// =============== RENDER DATA ENTRY ===============
+function renderDataEntry(){
+  const sel=document.getElementById('entryInst');
+  if(!sel.options.length)sel.innerHTML=institutions.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+  loadEntryData();
+}
+
+function loadEntryData(){
+  const instId=document.getElementById('entryInst').value;
+  const lineFilter=document.getElementById('entryLine').value;
+  const filtered=lineFilter==='all'?components:components.filter(c=>{const pa=projects.find(p=>p.id===c.pa);return pa&&pa.line===lineFilter});
+  let html='';
+  filtered.forEach(c=>{
+    const val=progressData[instId]?progressData[instId][c.id]||0:0;
+    html+=`<tr>
+      <td>${c.id}</td><td style="font-size:12px">${c.name}</td><td><span class="badge badge-blue">${c.pa}</span></td>
+      <td><div class="progress-bar" style="width:60px;display:inline-block"><div class="progress-fill" style="width:${val}%;background:${getColor(val)}"></div></div> ${val}%</td>
+      <td><input type="number" min="0" max="100" value="${val}" data-comp="${c.id}" class="entry-input" style="width:80px"></td>
+      <td><input type="text" placeholder="Observación..." data-obs="${c.id}" style="padding:6px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:100%"></td>
+    </tr>`;
+  });
+  document.getElementById('entryTable').innerHTML=html;
+}
+
+function saveEntryData(){
+  const instId=document.getElementById('entryInst').value;
+  document.querySelectorAll('.entry-input').forEach(inp=>{
+    const compId=parseInt(inp.dataset.comp);
+    const val=Math.min(100,Math.max(0,parseInt(inp.value)||0));
+    if(!progressData[instId])progressData[instId]={};
+    progressData[instId][compId]=val;
+  });
+  notify('Avances guardados correctamente');
+  renderOverview();
+  loadEntryData();
+}
+
+function resetEntryData(){loadEntryData()}
+function filterByYear(){}
+function exportReport(){
+  let csv='Institución,Componente,PA,Avance\n';
+  institutions.forEach(inst=>{components.forEach(c=>{csv+=`"${inst.name}","${c.name}",${c.pa},${progressData[inst.id][c.id]||0}\n`})});
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='PEM_Necoclí_Reporte.csv';a.click();
+  notify('Reporte exportado en CSV');
+}
+
+// =============== INIT ===============
+document.addEventListener('DOMContentLoaded',()=>{
+  renderOverview();
+});
+</script>
+
+
+</body></html>
