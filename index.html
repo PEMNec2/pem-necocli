@@ -463,23 +463,54 @@ function initProgress(){
 }
 initProgress();
 
+// Mapa programa → PAs (para cuando no se selecciona PA específico)
+const PROG_TO_PA = {
+  'P1':['PA-1','PA-2','PA-3','PA-4','PA-5'],
+  'P2':['PA-6','PA-7','PA-8'],
+  'P3':['PA-9','PA-10','PA-11'],
+  'P4':['PA-12','PA-13','PA-14'],
+  'P5':['PA-15','PA-16','PA-17','PA-18','PA-19'],
+  'P6':['PA-20']
+};
+
 function cargarDatosReales(){
+  const div = document.getElementById('linesProgress');
   fetch(API_URL)
     .then(r=>r.json())
     .then(d=>{
       const registros = d.data || [];
-      const acumulado = {};
+      const acumulado = {}; // instId -> paId -> [valores]
+
       registros.forEach(r=>{
         const instId = INST_MAP[r.institucion];
         if(!instId) return;
-        const paMatch = (r.componente||'').match(/PA-\d+/);
-        if(!paMatch) return;
-        const paId = paMatch[0];
         const pct = parseInt(r.avance) || 0;
-        if(!acumulado[instId]) acumulado[instId]={};
-        if(!acumulado[instId][paId]) acumulado[instId][paId]=[];
-        acumulado[instId][paId].push(pct);
+
+        // Intentar extraer PA del campo componente
+        const paMatch = (r.componente||'').match(/PA-\d+/);
+        let paIds = [];
+
+        if((r.componente||'').toUpperCase() === 'GENERAL'){
+          // Avance general → reparte entre todos los PAs del programa
+          const progMatch = (r.programa||'').match(/P\d+/);
+          if(progMatch) paIds = PROG_TO_PA[progMatch[0]] || [];
+        } else if(paMatch){
+          // PA específico
+          paIds = [paMatch[0]];
+        } else {
+          // Fallback: usar programa
+          const progMatch = (r.programa||'').match(/P\d+/);
+          if(progMatch) paIds = PROG_TO_PA[progMatch[0]] || [];
+        }
+
+        paIds.forEach(paId=>{
+          if(!acumulado[instId]) acumulado[instId]={};
+          if(!acumulado[instId][paId]) acumulado[instId][paId]=[];
+          acumulado[instId][paId].push(pct);
+        });
       });
+
+      // Aplicar promedios
       Object.keys(acumulado).forEach(instId=>{
         Object.keys(acumulado[instId]).forEach(paId=>{
           const vals = acumulado[instId][paId];
@@ -487,10 +518,12 @@ function cargarDatosReales(){
           (PA_COMPONENTS[paId]||[]).forEach(cid=>{ progressData[instId][cid]=promedio; });
         });
       });
+
       renderOverview();
-      notify('Datos actualizados desde Google Sheets ✓');
+      const total = registros.length;
+      notify('✓ ' + total + ' registro(s) cargados desde Google Sheets');
     })
-    .catch(()=>{});
+    .catch(()=>{ notify('Sin conexión — mostrando datos en caché'); });
 }
 
 // ICE-PEM dimensions
