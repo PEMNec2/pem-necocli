@@ -343,13 +343,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
 // CONFIG — cambia solo este ID
 // ══════════════════════════════════════
 const GOOGLE_CLIENT_ID = '604636468668-1a18dipsm9i45gosduhklq42ua9ssrc7.apps.googleusercontent.com';
-const API_URL = 'https://script.google.com/macros/s/AKfycbworxe4n8XSfsVp62TW1T_SYySrUxd0mtJT-3BashE1eFE1jIpDOCuhZicicmk-Wkr6/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby-xRgdAOssG2M_Q0fvA_BbGrqMYkeA4vU46JCjRKjEwFyXNuZ7Z9lLPO0ufgjgTXyb/exec';
 
 // ══════════════════════════════════════
 // ESTADO DE SESIÓN
 // ══════════════════════════════════════
 let currentUser = null;
 let todosRegistros = [];
+let editandoId = null; // ID del registro que se está editando
 
 // Inicializa Google Identity Services
 window.onload = function(){
@@ -447,6 +448,8 @@ function enviar(){
   btn.textContent = '⏳ Enviando...';
 
   var datos = {
+    id: editandoId || String(Date.now()),
+    action: editandoId ? 'update' : 'create',
     fecha: new Date().toISOString().split('T')[0],
     timestamp: new Date().toLocaleString('es-CO'),
     googleId: currentUser ? currentUser.sub : '',
@@ -475,7 +478,11 @@ function enviar(){
   .then(r => r.json())
   .then(d => {
     if(d.status === 'ok'){
-      mostrarMsg('✅ ¡Registro enviado! Los datos fueron guardados en el sistema.', 'ok');
+      const accion = editandoId ? 'actualizado' : 'enviado';
+      mostrarMsg('✅ ¡Registro ' + accion + '! Los datos fueron guardados en el sistema.', 'ok');
+      editandoId = null;
+      document.getElementById('btnEnviar').textContent = '📤 Enviar Registro';
+      document.querySelector('#tab-form .card h2').textContent = '🏫 Datos de la Institución';
       limpiarForm();
     } else {
       mostrarMsg('❌ Error al enviar. Intente de nuevo.', 'err');
@@ -549,6 +556,33 @@ function filtrar(){
   mostrarRegistros(filtrados);
 }
 
+function editarRegistro(id){
+  const r = todosRegistros.find(x => String(x.id) === String(id));
+  if(!r) return;
+  // Cambiar a pestaña formulario
+  showTab('form');
+  // Marcar que estamos editando
+  editandoId = String(id);
+  document.getElementById('btnEnviar').textContent = '💾 Guardar Cambios';
+  document.querySelector('#tab-form .card h2').textContent = '✏️ Editando Registro';
+  // Rellenar campos
+  const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+  setVal('institucion', r.institucion);
+  setVal('cargo', r.cargo);
+  setVal('telefono', r.telefono);
+  setVal('lineaEstrategica', r.lineaEstrategica);
+  setVal('programa', r.programa);
+  setVal('componente', r.componente);
+  setVal('meta', r.meta);
+  setVal('avance', r.avance);
+  setVal('semestre', r.semestre);
+  setVal('poblacion', r.poblacion);
+  setVal('observacion', r.observacion);
+  setVal('evidencia', r.evidencia);
+  setVal('dificultades', r.dificultades);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
 function mostrarRegistros(regs){
   var div = document.getElementById('historial');
   if(!regs.length){
@@ -575,6 +609,7 @@ function mostrarRegistros(regs){
     html += '<p><strong>Responsable:</strong> ' + (r.responsable || '-') + ' (' + (r.cargo || 'sin cargo') + ') | <strong>Fecha:</strong> ' + (r.fecha || '-') + '</p>';
     if(r.dificultades) html += '<p style="color:#c0392b"><strong>⚠ Dificultades:</strong> ' + r.dificultades + '</p>';
     if(r.evidencia) html += '<p><a href="' + r.evidencia + '" target="_blank" style="color:#2e86c1">🔗 Ver evidencia</a></p>';
+    if(esMio) html += '<button onclick="editarRegistro(\''+r.id+'\')" style="margin-top:8px;padding:6px 16px;background:#2e86c1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600">✏️ Editar este registro</button>';
     html += '</div>';
   });
   div.innerHTML = html;
