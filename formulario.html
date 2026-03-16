@@ -344,7 +344,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
 // CONFIG — cambia solo este ID
 // ══════════════════════════════════════
 const GOOGLE_CLIENT_ID = '604636468668-1a18dipsm9i45gosduhklq42ua9ssrc7.apps.googleusercontent.com';
-const API_URL = 'https://script.google.com/macros/s/AKfycbzKyRQ4Ia51SsnAUsdxrBUaTOBuH3nE6RjXkUL_e-ZOpbPht4s_tAqkZxPEeEwJwJLF/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzAI425DhuwhigGyOCUinFblPZDukoaXL4aLkX9sp2PTrLKsYERVSAZJrteHngJNN7t/exec';
 
 // ══════════════════════════════════════
 // ESTADO DE SESIÓN
@@ -518,20 +518,32 @@ function limpiarForm(){
 // ══════════════════════════════════════
 // HISTORIAL
 // ══════════════════════════════════════
+
+// ── JSONP fetch (evita bloqueo CORS con Google Apps Script) ──
+function fetchJSONP(url, callback){
+  const cbName = 'pem_cb_' + Date.now();
+  window[cbName] = function(data){
+    delete window[cbName];
+    document.body.removeChild(script);
+    callback(data);
+  };
+  const script = document.createElement('script');
+  script.onerror = function(){ callback(null); };
+  script.src = url + '?callback=' + cbName;
+  document.body.appendChild(script);
+}
+
 function cargarHistorial(){
   var div = document.getElementById('historial');
   div.innerHTML = '<div class="loading">⏳ Cargando registros del PEM...</div>';
 
-  fetch(API_URL, {redirect:'follow'})
-    .then(r => r.json())
-    .then(d => {
+  fetchJSONP(API_URL, function(d){
+    if(!d){ div.innerHTML = '<div class="msg err" style="display:block">❌ Error de conexión. Intenta de nuevo.</div>'; return; }
       todosRegistros = d.data || [];
       llenarFiltros();
       mostrarRegistros(todosRegistros);
     })
-    .catch(e => {
-      div.innerHTML = '<div class="msg err" style="display:block">❌ Error al cargar: ' + e.message + '</div>';
-    });
+  });
 }
 
 function llenarFiltros(){
