@@ -539,10 +539,9 @@ function cargarHistorial(){
 
   fetchJSONP(API_URL, function(d){
     if(!d){ div.innerHTML = '<div class="msg err" style="display:block">❌ Error de conexión. Intenta de nuevo.</div>'; return; }
-      todosRegistros = d.data || [];
-      llenarFiltros();
-      mostrarRegistros(todosRegistros);
-    })
+    todosRegistros = d.data || [];
+    llenarFiltros();
+    mostrarRegistros(todosRegistros);
   });
 }
 
