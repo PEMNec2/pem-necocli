@@ -95,7 +95,8 @@ select,input[type="number"]{padding:8px 12px;border:1px solid #ddd;border-radius
       <select id="yearFilter" onchange="filterByYear()" style="padding:6px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px">
         <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option>
       </select>
-      <a href="formulario.html" style="text-decoration:none"><button class="btn btn-success" style="background:#2d6a4f"><i class="fas fa-edit"></i> Registrar Avance</button></a>
+      <a href="formulario.html" style="text-decoration:none"><button class="btn btn-success" style="background:#2d6a4f;margin-right:4px"><i class="fas fa-edit"></i> Registrar Avance</button></a>
+      <button class="btn btn-outline" onclick="cargarDatosReales()" style="margin-right:4px" title="Sincronizar datos del formulario"><i class="fas fa-sync-alt"></i> Actualizar</button>
       <button class="btn btn-primary" onclick="exportReport()"><i class="fas fa-download"></i> Exportar</button>
     </div>
   </div>
@@ -406,6 +407,7 @@ const components = [
 ];
 
 const institutions = [
+  {id:'IE00',name:'Secretaría de Educación Municipal',students:0,seats:0,zone:'Municipal'},
   {id:'IE01',name:'CER Bobal La Playa',students:342,seats:4,zone:'Rural'},
   {id:'IE02',name:'CER El Paraíso',students:145,seats:5,zone:'Rural'},
   {id:'IE03',name:'CER Melilto Arriba',students:161,seats:3,zone:'Rural'},
@@ -427,17 +429,69 @@ const institutions = [
   {id:'IE19',name:'IER Pueblo Nuevo',students:592,seats:5,zone:'Rural'}
 ];
 
+// ── CONFIG ──────────────────────────────────────
+const API_URL = 'https://script.google.com/macros/s/AKfycbworxe4n8XSfsVp62TW1T_SYySrUxd0mtJT-3BashE1eFE1jIpDOCuhZicicmk-Wkr6/exec';
+
+const INST_MAP = {
+  'Secretaría de Educación Municipal':'IE00',
+  'CER Bobal La Playa':'IE01','CER El Paraíso':'IE02',
+  'CER Melilto Arriba':'IE03','CER Vale Pavas':'IE04',
+  'IER Caribia':'IE05','IE Antonio Roldán Betancur':'IE06',
+  'IER El Totumo':'IE07','IER Melilto':'IE08',
+  'IER Mulaticos Piedrecitas':'IE09','IER Mulatos':'IE10',
+  'IER San Sebastián de Urabá':'IE11','IER Tulapita':'IE12',
+  'IER Zapata':'IE13','IER Indígena José Elías Suárez':'IE14',
+  'IE Eduardo Espitia Romero':'IE15','IER La Comarca':'IE16',
+  'IER Las Changas':'IE17','IER Mello Villavicencio':'IE18',
+  'IER Pueblo Nuevo':'IE19'
+};
+
+const PA_COMPONENTS = {};
+components.forEach(c=>{ if(!PA_COMPONENTS[c.pa])PA_COMPONENTS[c.pa]=[]; PA_COMPONENTS[c.pa].push(c.id); });
+
 // Progress data: institution -> component -> percentage
 let progressData = {};
 function initProgress(){
   institutions.forEach(inst=>{
     progressData[inst.id]={};
-    components.forEach(c=>{
-      progressData[inst.id][c.id]=Math.floor(Math.random()*35);
-    });
+    components.forEach(c=>{ progressData[inst.id][c.id]=0; });
   });
+  // Dato real: plataforma web = 10% en PA-20 para Secretaría
+  if(progressData['IE00']){
+    (PA_COMPONENTS['PA-20']||[]).forEach(cid=>{ progressData['IE00'][cid]=10; });
+  }
 }
 initProgress();
+
+function cargarDatosReales(){
+  fetch(API_URL)
+    .then(r=>r.json())
+    .then(d=>{
+      const registros = d.data || [];
+      const acumulado = {};
+      registros.forEach(r=>{
+        const instId = INST_MAP[r.institucion];
+        if(!instId) return;
+        const paMatch = (r.componente||'').match(/PA-\d+/);
+        if(!paMatch) return;
+        const paId = paMatch[0];
+        const pct = parseInt(r.avance) || 0;
+        if(!acumulado[instId]) acumulado[instId]={};
+        if(!acumulado[instId][paId]) acumulado[instId][paId]=[];
+        acumulado[instId][paId].push(pct);
+      });
+      Object.keys(acumulado).forEach(instId=>{
+        Object.keys(acumulado[instId]).forEach(paId=>{
+          const vals = acumulado[instId][paId];
+          const promedio = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+          (PA_COMPONENTS[paId]||[]).forEach(cid=>{ progressData[instId][cid]=promedio; });
+        });
+      });
+      renderOverview();
+      notify('Datos actualizados desde Google Sheets ✓');
+    })
+    .catch(()=>{});
+}
 
 // ICE-PEM dimensions
 let iceDimensions = {A:28,B:22,C:30,D:25};
@@ -862,6 +916,7 @@ function exportReport(){
 // =============== INIT ===============
 document.addEventListener('DOMContentLoaded',()=>{
   renderOverview();
+  cargarDatosReales();
 });
 </script>
 
