@@ -475,7 +475,7 @@ const PROG_TO_PA = {
 
 function cargarDatosReales(){
   const div = document.getElementById('linesProgress');
-  fetch(API_URL)
+  fetch(API_URL, {redirect:'follow'})
     .then(r=>r.json())
     .then(d=>{
       const registros = d.data || [];
@@ -484,7 +484,15 @@ function cargarDatosReales(){
       registros.forEach(r=>{
         const instId = INST_MAP[r.institucion];
         if(!instId) return;
-        const pct = parseInt(r.avance) || 0;
+        // Normalizar avance: puede venir como "20%", 0.2 (decimal), o 20
+        let rawAvance = r.avance || 0;
+        let pct = 0;
+        if(typeof rawAvance === 'string' && rawAvance.includes('%')){
+          pct = parseInt(rawAvance) || 0;
+        } else {
+          let num = parseFloat(rawAvance) || 0;
+          pct = num <= 1 ? Math.round(num * 100) : Math.round(num);
+        }
 
         // Intentar extraer PA del campo componente
         const paMatch = (r.componente||'').match(/PA-\d+/);
