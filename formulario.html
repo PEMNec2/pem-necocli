@@ -223,9 +223,10 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
           </select>
         </div>
         <div class="form-group">
-          <label>Proyecto Articulador</label>
-          <select id="componente">
-            <option value="">-- Seleccione (opcional) --</option>
+          <label>Proyecto Articulador *</label>
+          <select id="componente" required>
+            <option value="">-- Seleccione --</option>
+            <option value="GENERAL">📌 Sin PA específico — actividad transversal o de soporte</option>
             <option>PA-1 Trayectorias Educativas Completas</option>
             <option>PA-2 Centros de Recursos para la Inclusión</option>
             <option>PA-3 Ruta de Cobertura Rural</option>
@@ -434,7 +435,7 @@ function showTab(t){
 // ENVÍO DEL FORMULARIO
 // ══════════════════════════════════════
 function enviar(){
-  var campos = ['institucion','lineaEstrategica','programa','meta','avance','semestre','observacion'];
+  var campos = ['institucion','lineaEstrategica','programa','componente','meta','avance','semestre','observacion'];
   for(var c of campos){
     if(!document.getElementById(c).value.trim()){
       mostrarMsg('⚠️ Complete todos los campos obligatorios (*)', 'err');
@@ -557,7 +558,9 @@ function filtrar(){
 }
 
 function editarRegistro(id){
-  const r = todosRegistros.find(x => String(x.id) === String(id));
+  // Buscar por id o por índice
+  const r = todosRegistros.find(x => String(x.id) === String(id)) ||
+            todosRegistros[parseInt(id)];
   if(!r) return;
   // Cambiar a pestaña formulario
   showTab('form');
@@ -609,7 +612,7 @@ function mostrarRegistros(regs){
     html += '<p><strong>Responsable:</strong> ' + (r.responsable || '-') + ' (' + (r.cargo || 'sin cargo') + ') | <strong>Fecha:</strong> ' + (r.fecha || '-') + '</p>';
     if(r.dificultades) html += '<p style="color:#c0392b"><strong>⚠ Dificultades:</strong> ' + r.dificultades + '</p>';
     if(r.evidencia) html += '<p><a href="' + r.evidencia + '" target="_blank" style="color:#2e86c1">🔗 Ver evidencia</a></p>';
-    if(esMio) html += '<button onclick="editarRegistro(\''+r.id+'\')" style="margin-top:8px;padding:6px 16px;background:#2e86c1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600">✏️ Editar este registro</button>';
+    if(esMio) html += '<button onclick="editarRegistro(\''+( r.id || todosRegistros.indexOf(r) )+'\')" style="margin-top:8px;padding:6px 16px;background:#2e86c1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600">✏️ Editar este registro</button>';
     html += '</div>';
   });
   div.innerHTML = html;
