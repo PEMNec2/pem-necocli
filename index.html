@@ -430,7 +430,7 @@ const institutions = [
 ];
 
 // ── CONFIG ──────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbzKyRQ4Ia51SsnAUsdxrBUaTOBuH3nE6RjXkUL_e-ZOpbPht4s_tAqkZxPEeEwJwJLF/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzAI425DhuwhigGyOCUinFblPZDukoaXL4aLkX9sp2PTrLKsYERVSAZJrteHngJNN7t/exec';
 
 const INST_MAP = {
   'Secretaría de Educación Municipal':'IE00',
@@ -473,11 +473,25 @@ const PROG_TO_PA = {
   'P6':['PA-20']
 };
 
+
+// ── JSONP fetch (evita bloqueo CORS con Google Apps Script) ──
+function fetchJSONP(url, callback){
+  const cbName = 'pem_cb_' + Date.now();
+  window[cbName] = function(data){
+    delete window[cbName];
+    document.body.removeChild(script);
+    callback(data);
+  };
+  const script = document.createElement('script');
+  script.onerror = function(){ callback(null); };
+  script.src = url + '?callback=' + cbName;
+  document.body.appendChild(script);
+}
+
 function cargarDatosReales(){
   const div = document.getElementById('linesProgress');
-  fetch(API_URL, {redirect:'follow'})
-    .then(r=>r.json())
-    .then(d=>{
+  fetchJSONP(API_URL, function(d){
+    if(!d){ notify('Sin conexión — reintenta más tarde'); return; }
       const registros = d.data || [];
       const acumulado = {}; // instId -> paId -> [valores]
 
@@ -531,7 +545,7 @@ function cargarDatosReales(){
       const total = registros.length;
       notify('✓ ' + total + ' registro(s) cargados desde Google Sheets');
     })
-    .catch(()=>{ notify('Sin conexión — mostrando datos en caché'); });
+  });
 }
 
 // ICE-PEM dimensions
