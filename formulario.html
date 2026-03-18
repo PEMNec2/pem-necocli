@@ -344,7 +344,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
 // CONFIG — cambia solo este ID
 // ══════════════════════════════════════
 const GOOGLE_CLIENT_ID = '604636468668-1a18dipsm9i45gosduhklq42ua9ssrc7.apps.googleusercontent.com';
-const API_URL = 'https://script.google.com/macros/s/AKfycbzAI425DhuwhigGyOCUinFblPZDukoaXL4aLkX9sp2PTrLKsYERVSAZJrteHngJNN7t/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzdMFoF4FSMzZ5QEOKfbQ43bthzHs3921_J4GQyKw-H2f_iW5J8OE2e03ABdtSOvFlu/exec';
 
 // ══════════════════════════════════════
 // ESTADO DE SESIÓN
@@ -522,14 +522,20 @@ function limpiarForm(){
 // ── JSONP fetch (evita bloqueo CORS con Google Apps Script) ──
 function fetchJSONP(url, callback){
   const cbName = 'pem_cb_' + Date.now();
+  let done = false;
+  const timer = setTimeout(function(){
+    if(!done){ done=true; cleanup(); callback(null); }
+  }, 10000);
   window[cbName] = function(data){
-    delete window[cbName];
-    document.body.removeChild(script);
-    callback(data);
+    if(!done){ done=true; clearTimeout(timer); cleanup(); callback(data); }
   };
+  function cleanup(){
+    delete window[cbName];
+    if(script.parentNode) document.body.removeChild(script);
+  }
   const script = document.createElement('script');
-  script.onerror = function(){ callback(null); };
-  script.src = url + '?callback=' + cbName;
+  script.onerror = function(){ if(!done){ done=true; clearTimeout(timer); cleanup(); callback(null); } };
+  script.src = url + (url.includes('?')?'&':'?') + 'callback=' + cbName + '&t=' + Date.now();
   document.body.appendChild(script);
 }
 
